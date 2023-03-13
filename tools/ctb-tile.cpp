@@ -80,6 +80,7 @@ public:
     meshQualityFactor(1.0),
     metadata(false),
     cesiumFriendly(false),
+    gzib(false),
     vertexNormals(false)
   {}
 
@@ -147,6 +148,11 @@ public:
   static void
   setResume(command_t* command) {
     static_cast<TerrainBuild *>(Command::self(command))->resume = true;
+  }
+
+  static void
+  setGzib(command_t* command) {
+      static_cast<TerrainBuild *>(Command::self(command))->gzib = true;
   }
 
   static void
@@ -236,7 +242,7 @@ public:
     verbosity;
 
   bool resume;
-
+  bool gzib;
   CPLStringList creationOptions;
   TilerOptions tilerOptions;
 
@@ -671,8 +677,8 @@ buildMesh(MeshSerializer &serializer, const MeshTiler &tiler, TerrainBuild *comm
 
     if (serializer.mustSerializeCoordinate(coordinate)) {
       MeshTile *tile = iter.operator*(&reader);
-      serializer.serializeTile(tile, writeVertexNormals);
-      delete tile;
+        serializer.serializeTile(tile, writeVertexNormals, command->gzib);
+        delete tile;
     }
 
     currentIndex = incrementIterator(iter, currentIndex);
@@ -778,7 +784,7 @@ main(int argc, char *argv[]) {
   command.option("-N", "--vertex-normals", "Write 'Oct-Encoded Per-Vertex Normals' for Terrain Lighting, only for `Mesh` format", TerrainBuild::setVertexNormals);
   command.option("-q", "--quiet", "only output errors", TerrainBuild::setQuiet);
   command.option("-v", "--verbose", "be more noisy", TerrainBuild::setVerbose);
-
+  command.option("-G", "--gzip", "use zib compress file(defalut uncompress)", TerrainBuild::setGzib);
   // Parse and check the arguments
   command.parse(argc, argv);
   command.check();
